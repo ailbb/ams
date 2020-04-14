@@ -1,0 +1,8 @@
+---
+# 暴露actuator所有端口
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+

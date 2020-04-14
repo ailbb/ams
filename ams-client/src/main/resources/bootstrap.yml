@@ -1,0 +1,144 @@
+# 服务器信息
+server:
+  address: 0.0.0.0 # 服务地址，绑定此地址会导致仅此IP才可以访问服务，如果需要其他地址访问，将localhost，修改为0.0.0.0
+  port: 30002   # 指定启动服务端口，设置成0，表示任意未被占用的端口
+#  servlet: # 根目录地址默认为/
+#    context-path: /
+#  error:
+#    path: /404 # 错误的路径
+
+---
+
+# 系统基础配置
+spring:
+  application:
+    name: ams-client # 程序名
+  #  rabbitmq: # Rabbitmq配置（客户端：http://www.rabbitmq.com/）
+  #    host: localhost
+  #    port: 5672
+  #    username: guest
+  #    password: guest
+  cloud:
+    stream:
+      kafka: # Rabbitmq/Kafka 2选1
+        binder:
+          # Kafka的服务端列表，默认localhost，在2.0里面，zk "No longer necessary since 2.0"
+          brokers: ${AYS_KAFKA:localhost\:9092}
+          auto-add-partitions: true
+          auto-create-topics: true
+          min-partition-count: 1
+  #  thymeleaf:
+  #    mode: LEGACYHTML5
+  #    cache: false
+  #  redis:
+  #    database: 1
+  #    host: 127.0.0.1
+  #    pool:
+  #        max-active: 20
+
+---
+
+logging:
+  file:   # 日志文件,绝对路径或相对路径
+  path:   # 保存日志文件目录路径
+  config: # 日志配置文件,Spring Boot默认使用classpath路径下的日志配置文件,如:logback.xml
+  level:
+     com.*: INFO # 配置spring web日志级别
+
+---
+
+# 自定义系统服务框架配置
+service:
+  ays:  # 资源服务中心 { ailbb yarn service}
+    name: ${AYS_NAME:ams}
+    host: ${AYS_HOST:localhost}
+    port: ${AYS_PORT:30001}
+
+---
+
+## SpringBoot Server：分布式配置中心 - 服务端
+## 1、注意！Client/Server的Jar包互相冲突，要和配置搭配使用（服务端使用服务端Jar包，客户端使用客户端Jar包，不然会报各种奇怪的错误，好大坑 T_T）
+#spring:
+#  profiles:
+#    active: native # 必须显示声明svn为spring.profiles.active=subversion，不然还是用的默认的git，native为本地搜索
+#  cloud:
+#    config:
+#      #      label: trunk # 分支名称，没有配置默认在svn下查找trunk，在git下查找master，客户端在使用的时候注意指定label
+#      server:
+#        prefix: /service/config # 配置中心请求链接的前缀
+#        native: # 本地配置方式
+#          searchLocations: classpath:/cdb/${spring.application.region} # 配置文件所在目录，classpath（类路径）和（系统文件路径） file两种
+##        svn:
+##          uri: svn://192.168.6.200/YFB2016007_BDS&S/Code/Trunk/newshare/sharepro/release/config/联通/jiangsu-iot/apache-tomcat-8.0.51/webapps/sharepro/WEB-INF # 配置服务路径
+##          searchPaths: /** # 配置仓库路径下的相对搜索位置，可以配置多个，/**表示递归所有目录
+##          username: zhangwei
+##          password: 0000
+##        git:
+##          uri: https://github.com/ailbb/ # github路径，逗号分隔多个
+##          searchPaths: /** # 配置仓库路径下的相对搜索位置，可以配置多个，/**表示递归所有目录
+##          username: lang1422310418@hotmail.com
+##          password: sir@zhang.0418
+
+---
+
+# SpringBoot Client：分布式配置中心 - 客户端
+# 1、注意！Client/Server的Jar包互相冲突，要和配置搭配使用（服务端使用服务端Jar包，客户端使用客户端Jar包，不然会报各种奇怪的错误，好大坑 T_T）
+# 2、必须与eureka在同一个文件内加载，否则无法获取服务名（使用discovery服务情况下会报错，uri无错）
+spring:
+# 配置服务
+  cloud:
+# 消息总线服务，发送POST请求访问服务/actuator/bus-refresh，在附带@Value的页面加上此注解@RefreshScope，进行动态刷新配置，通常和配置客户端放在一起(config-client)，需要与Rabbitmq搭配使用
+# 另外，/actuator/bus-refresh接口可以指定服务，即使用”destination”参数，比如 “/actuator/bus-refresh?destination=customers:**” 即刷新服务名为customers的所有服务，不管ip
+# 注：Spring boot 2.0之前 用/bus/refresh，Spring boot 2.0的改动较大，/bus/refresh全部整合到actuador里面了 /actuator/bus-refresh
+    bus:
+      trace:
+        enabled: true # Spring Boot TraceRepository（如果存在）将显示每个服务实例发送的所有事件和所有的ack，默认为false
+    config:
+      label: trunk # 分支名称，没有配置默认在svn下查找trunk，在git下查找master，客户端在使用的时候注意指定label
+      name: thirdparty #  配合客户端用（服务端不要），指定特定文件，要符合{spring.cloud.config.name}-{spring.cloud.config.profile}.preperties 或者后缀为.yml的配置文件
+      profile: dev # 配合客户端用（服务端不要），指定特定文件类型，test / dev 等等，默认为default
+#       客户端，通过地址访问配置中心
+#      uri: http://${eureka.instance.hostname}:${service.ays.port}
+#       客户端，通过服务名访问配置中心
+      discovery:
+        enabled: true
+        service-id: ${service.ays.name}
+      fail-fast: true # 获取配置文件失败快速响应
+
+---
+
+eureka:
+  dashboard:
+    # eureka的默认服务地址，默认为/，/eureka因为有注册中心服务，所以无法无法设置为界面。
+    path: /actuator/eureka
+  instance:
+    hostname: ${service.ays.host}
+  #      prefer-ip-address: true
+  #      # 服务消费者和服务提供者分别属于哪个zone，均是通过eureka.instance.metadata-map.zone来判定的。服务消费者会先通过ribbon去注册中心拉取一份服务提供者的列表，然后通
+  #      # 过eureka.instance.metadata-map.zone指定的zone进行过滤，过滤之后如果同一个zone内的服务提供者有多个实例，则会轮流调用。只有在同一个zone内的所有服务提供者都不
+  #      # 可用时，才会调用其它zone内的服务提供者。
+  #      metadata-map:
+  #        zone: zone1-1
+  client:
+    # 是否获取注册信息到本地，默认为true，没有注册信息不能通过restTemplate+程序名访问
+    # 是否将eureka自身作为应用注册到eureka注册中心，默认为true
+    fetch-registry: true
+    register-with-eureka: true
+    #当前应用所在区域,默认为us-east-1
+    #      region: region1
+    #      #开启DNS方式获取serviceUrl,默认为false
+    #      use-dns-for-fetching-service-urls: false
+    #      #获取serviceUrl时候是否优先获取相同zone的列表(如果获取为空则获取所在region第一个zone),如果为false则优先获取不在相同zone的列表
+    #      #client所在zone为availabilityZones的第一个zone,如果未配置,则为defaultZone
+    #      prefer-same-zone-eureka: true
+    #      #与DNS获取的方式相同,这里需要手工配置包含哪些region以及zone(Map类型),如果没有给相关的region配置zone,则默认返回defaultZone
+    #      availability-zones:
+    #        region1: zone1-1,zone1-2
+    #        region2: zone2-1,zone2-2
+    # 与DNS获取数据方式类似,这里需要手工配置每个zone包含哪些URL,如果应用所在区域没有zone,则默认返回defaultZone的数据
+    service-url:
+      defaultZone:  http://${eureka.instance.hostname}:${service.ays.port}/eureka/ # 注册中心
+#        zone1-1: http://${eureka.instance.hostname}:${service.ays.port}/eureka/,http://${eureka.instance.hostname}:${service.ays.port}/eureka/
+#        zone1-2: http://${eureka.instance.hostname}:${service.ays.port}/eureka/,http://${eureka.instance.hostname}:${service.ays.port}/eureka/
+#        zone2-1: http://${eureka.instance.hostname}:${service.aysport}/eureka/,http://${eureka.instance.hostname}:${service.aysport}/eureka/
+#        zone2-2: http://${eureka.instance.hostname}:${service.ays.port}/eureka/,http://${eureka.instance.hostname}:${service.ays.port}/eureka/

@@ -1,0 +1,56 @@
+version: '3'
+services:
+  nginx:
+    container_name: v-nginx
+    image: nginx:latest
+    restart: always
+    ports:
+    - 80:80
+    - 443:443
+    volumes:
+    - ./nginx/conf.d:/etc/nginx/conf.d
+#
+#  mysql:
+#    container_name: v-mysql
+#    image: mysql/mysql-server:5.7
+#    environment:
+#      MYSQL_DATABASE: test
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_ROOT_HOST: '%'
+#    ports:
+#    - "3306:3306"
+#    restart: always
+
+  ays:
+    restart: always   # restart: always 表示如果服务启动不成功会一直尝试。
+    build: ./app
+    working_dir: /app
+    environment:
+      AYS_HOST: 127.0.0.1
+      AYS_JDBC_MAIN: 192.168.5.151:3306/sharepro
+      AYS_JDBC_MAIN_PWD: broadtech
+      AYS_JDBC_MAIN_USR: root
+      AYS_KAFKA: 192.168.5.151:9092
+      AYS_NAME: sharepro
+      AYS_PORT: 8080
+      AYS_REGION: local
+    volumes: # volumes: 加载本地目录下的配置文件到容器目标地址下
+    - ./app:/app
+    - ~/.m2:/root/.m2
+    expose:
+    - "8080" #ports: 表示对外开放的端口
+    depends_on:
+    - nginx #depends_on：可以配置依赖服务，表示需要先启动 depends_on 下面的服务后，再启动本服务。
+#    - mysql
+    command: mvn clean spring-boot:run -Dspring-boot.run.profiles=docker #  表示以这个命令来启动项目，-Dspring-boot.run.profiles=docker表示使用 application-docker.properties文件配置信息进行启动。
+
+
+    # version: '3'： 表示使用第三代语法来构建 docker-compose.yaml 文件。
+      #services: 用来表示 compose 需要启动的服务，我们可以看出此文件中有三个服务分别为：nginx、mysql、app。
+      #container_name: 容器名称
+      #environment: 此节点下的信息会当作环境变量传入容器，此示例中 mysql 服务配置了数据库、密码和权限信息。
+
+
+
+
+    #command: mvn clean spring-boot:run -Dspring-boot.run.profiles=docker:

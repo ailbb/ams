@@ -1,0 +1,15 @@
+# 服务器信息
+server:
+  address: 0.0.0.0 # 服务地址，绑定此地址会导致仅此IP才可以访问服务，如果需要其他地址访问，将localhost，修改为0.0.0.0
+  port: 30003   # 指定启动服务端口，设置成0，表示任意未被占用的端口
+#  servlet: # 根目录地址默认为/
+#    context-path: /
+#  error:
+#    path: /404 # 错误的路径
+
+---
+
+# 系统基础配置
+spring:
+  application:
+    name: ams-single # 程序名
