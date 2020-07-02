@@ -245,7 +245,7 @@
 
         <version.mybatis>1.3.2</version.mybatis>
 
-        <version.jdbc.mysql>5.1.42</version.jdbc.mysql>
+        <version.jdbc.mysql>8.0.16</version.jdbc.mysql>
         <version.jdbc.sqlite>3.19.3</version.jdbc.sqlite>
 
         <version.jsonlib>2.4</version.jsonlib>
