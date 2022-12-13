@@ -216,7 +216,7 @@
         <version.jdbc.mysql>5.1.42</version.jdbc.mysql>
         <version.jdbc.sqlite>3.19.3</version.jdbc.sqlite>
 
-        <version.cxf>3.3.0</version.cxf>
+        <version.cxf>3.4.10</version.cxf>
 
         <version.ailbb.ajj>1.9-SNAPSHOT</version.ailbb.ajj>
     </properties>
